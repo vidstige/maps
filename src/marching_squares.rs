@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::grid::Grid;
 
 pub trait Field {
@@ -6,11 +8,11 @@ pub trait Field {
 
 pub type Contour = Vec<[f64; 2]>;
 
-const POINTS: [[f64; 2]; 4] = [
-    [0.0, 0.0],
-    [1.0, 0.0],
-    [0.0, 1.0],
-    [1.0, 1.0],
+const POINTS: [[i32; 2]; 4] = [
+    [0, 0],
+    [1, 0],
+    [0, 1],
+    [1, 1],
 ];
 
 type Edge = (usize, usize);
@@ -33,7 +35,7 @@ const LOOKUP: [[Option<(Edge, Edge)>; 2]; 16] = [
     [None, None],
 ];
 
-fn interpolate_edge(points: &[[f64; 2]], values: &[f64; 4], (i0, i1): Edge, level: f64) -> [f64; 2] {
+fn interpolate_edge(points: &[[i32; 2]], (x, y): (f64, f64), values: &[f64; 4], (i0, i1): Edge, level: f64) -> [f64; 2] {
     // make sure v0 is smaller that v1
     let (v0, v1) = if values[i0] > values[i1] {
         (values[i0], values[i1])
@@ -42,10 +44,10 @@ fn interpolate_edge(points: &[[f64; 2]], values: &[f64; 4], (i0, i1): Edge, leve
     };
     // compute parameter
     let t = (level - v0) / (v1 - v0);
-    // lerp x & y
+    // lerp x & y and add offsets
     [
-        (1.0 - t) * points[i0][0] + t * points[i1][0],
-        (1.0 - t) * points[i0][1] + t * points[i1][1],
+        x + (1.0 - t) * (points[i0][0] as f64) + t * (points[i1][0] as f64),
+        y + (1.0 - t) * (points[i0][1] as f64) + t * (points[i1][1] as f64),
     ]
     
 }
@@ -109,7 +111,19 @@ fn find_chains(edges: &[Edge]) -> Vec<Vec<usize>> {
     chains
 }
 
+type VertexId = (i32, i32, bool);
+fn vertex_id(x: usize, y: usize, edge: Edge) -> VertexId {
+    let (a, b) = edge;
+    let dy = POINTS[b][1] - POINTS[a][1];
+    let is_horizontal = dy == 0;
+    (x as i32 + POINTS[a][0], y as i32 + POINTS[b][1], is_horizontal)
+}
+
 pub fn find_contours(grid: &Grid<f64>, level: f64) -> Vec<Contour> {
+    // keeps track of vertex ids -> vertex number
+    let mut lookup = HashMap::new();
+
+    // holds vertex cordinates
     let mut vertices = Vec::new();
     let mut lines = Vec::new();
     for y in 0..grid.height() - 1 {
@@ -129,17 +143,36 @@ pub fn find_contours(grid: &Grid<f64>, level: f64) -> Vec<Contour> {
                 .map(|(i, v)| (1 << i) * ((*v < level) as usize)).sum();
             // loop over items that are not None
             for (e0, e1) in LOOKUP[table_index].iter().flatten() {
-                let a = interpolate_edge(&POINTS, &values, *e0, level);
-                let b = interpolate_edge(&POINTS, &values, *e1, level);
-                lines.push((vertices.len(), vertices.len() + 1));
-                vertices.push([x as f64 + a[0], y as f64 + a[1]]);
-                vertices.push([x as f64 + b[0], y as f64 + b[1]]);
+                let id0 = vertex_id(x, y, *e0);
+                let id1 = vertex_id(x, y, *e1);
+
+                let position = (x as f64, y as f64);
+                let vertex0 = *lookup
+                    .entry(id0)
+                    .or_insert_with(|| {
+                        // interpolate
+                        let vertex = interpolate_edge(&POINTS, position, &values, *e0, level);
+                        // add and return index
+                        vertices.push(vertex);
+                        vertices.len() - 1
+                    });
+                let vertex1 = *lookup
+                    .entry(id1)
+                    .or_insert_with(|| {
+                        // interpolate
+                        let vertex = interpolate_edge(&POINTS, position, &values, *e1, level);
+                        // add and return index
+                        vertices.push(vertex);
+                        vertices.len() - 1
+                    });
+                
+                // add edge
+                lines.push((vertex0, vertex1));
             }
         }
     }
     // just dump all line segments
     //lines.iter().map(|(i0, i1)| vec![vertices[*i0], vertices[*i1]]).collect()
-    println!("{}", lines.len());
     // find chains and convert vertex ids to cordinates
     find_chains(&lines).iter().map(|chain| chain.iter().map(|&v| vertices[v]).collect()).collect()
 }

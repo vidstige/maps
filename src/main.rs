@@ -32,7 +32,7 @@ fn main() -> Result<(), MapsError> {
     ctx.set_source_rgb(1.0, 1.0, 1.0);
     ctx.paint()?;
 
-    let scale = 3.5;
+    let scale = 0.2;
     let generator = Source::simplex(42).scale([scale, scale]);
     
     let grid_resolution = Resolution { width: 30, height: 30};
