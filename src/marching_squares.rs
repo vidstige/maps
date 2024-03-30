@@ -37,7 +37,7 @@ const LOOKUP: [[Option<(Edge, Edge)>; 2]; 16] = [
 
 fn interpolate_edge(points: &[[i32; 2]], (x, y): (f64, f64), values: &[f64; 4], (i0, i1): Edge, level: f64) -> [f64; 2] {
     // make sure v0 is smaller that v1
-    let (v0, v1) = if values[i0] > values[i1] {
+    let (v0, v1) = if values[i0] < values[i1] {
         (values[i0], values[i1])
     } else {
         (values[i1], values[i0])
