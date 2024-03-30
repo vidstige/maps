@@ -29,8 +29,8 @@ fn main() -> Result<(), MapsError> {
     let surface = ImageSurface::create(cairo::Format::Rgb24, resolution.width as i32, resolution.height as i32)?;
     let ctx = Context::new(&surface)?;
     // clear to white
-    //ctx.set_source_rgb(1.0, 1.0, 1.0);
-    //ctx.paint()?;
+    ctx.set_source_rgb(1.0, 1.0, 1.0);
+    ctx.paint()?;
 
     let scale = 3.5;
     let generator = Source::simplex(42).scale([scale, scale]);
@@ -39,7 +39,7 @@ fn main() -> Result<(), MapsError> {
     let buffer = NoiseBuffer::<2>::new(grid_resolution.slice(), &generator);
     let grid = Grid::from_buffer(grid_resolution, &buffer.buffer);
     // draw grid
-    for x in 0..grid.width() {
+    /*for x in 0..grid.width() {
         for y in 0..grid.height() {
             let value = grid[(x, y)] * 0.5 + 0.5;
             ctx.set_source_rgb(value, 0.0, value);
@@ -51,11 +51,14 @@ fn main() -> Result<(), MapsError> {
             );
             ctx.fill()?;
         }
-    }
+    }*/
+
     let contours = find_contours(&grid, 0.0);
+    println!("{}", contours.len());
     ctx.set_line_width(1.0);
     ctx.set_source_rgb(0.0, 0.0, 0.0);
     for contour in contours {
+        //println!("  length {}", contour.len());
         for p in contour {
             ctx.line_to(
                 p[0] * resolution.width as f64 / grid.width() as f64,
