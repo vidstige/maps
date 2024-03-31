@@ -36,14 +36,11 @@ const LOOKUP: [[Option<(Edge, Edge)>; 2]; 16] = [
 ];
 
 fn interpolate_edge(points: &[[i32; 2]], (x, y): (f64, f64), values: &[f64; 4], (i0, i1): Edge, level: f64) -> [f64; 2] {
-    // make sure v0 is smaller that v1
-    let (v0, v1) = if values[i0] < values[i1] {
-        (values[i0], values[i1])
-    } else {
-        (values[i1], values[i0])
-    };
+    let (v0, v1) = (values[i0], values[i1]);
+    
     // compute parameter
     let t = (level - v0) / (v1 - v0);
+    debug_assert!(t >= 0.0 && t < 1.0);
     // lerp x & y and add offsets
     [
         x + (1.0 - t) * (points[i0][0] as f64) + t * (points[i1][0] as f64),

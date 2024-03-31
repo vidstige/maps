@@ -32,14 +32,14 @@ fn main() -> Result<(), MapsError> {
     ctx.set_source_rgb(1.0, 1.0, 1.0);
     ctx.paint()?;
 
-    let scale = 0.2;
+    let scale = 0.025;
     let generator = Source::simplex(42).scale([scale, scale]);
     
-    let grid_resolution = Resolution { width: 30, height: 30};
+    let grid_resolution = Resolution { width: 64, height: 64};
     let buffer = NoiseBuffer::<2>::new(grid_resolution.slice(), &generator);
     let grid = Grid::from_buffer(grid_resolution, &buffer.buffer);
     // draw grid
-    /*for x in 0..grid.width() {
+    for x in 0..grid.width() {
         for y in 0..grid.height() {
             let value = grid[(x, y)] * 0.5 + 0.5;
             ctx.set_source_rgb(value, 0.0, value);
@@ -51,7 +51,7 @@ fn main() -> Result<(), MapsError> {
             );
             ctx.fill()?;
         }
-    }*/
+    }
 
     let contours = find_contours(&grid, 0.0);
     println!("{}", contours.len());
