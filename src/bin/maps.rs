@@ -1,11 +1,8 @@
-mod marching_squares;
-mod grid;
-
 use std::fs::File;
 use cairo::{Context, ImageSurface, IoError};
-use grid::{Grid, Resolution};
 use libnoise::{Generator, NoiseBuffer, Source};
-use marching_squares::find_contours;
+use maps::grid::{Grid, Resolution};
+use maps::marching_squares::find_contours;
 
 #[derive(Debug)]
 enum MapsError {
@@ -61,8 +58,8 @@ fn main() -> Result<(), MapsError> {
         //println!("  length {}", contour.len());
         for p in contour {
             ctx.line_to(
-                p[0] * resolution.width as f64 / grid.width() as f64,
-                p[1] * resolution.height as f64 / grid.height() as f64,
+                p[0] * resolution.width as f64 / (grid.width() - 1) as f64,
+                p[1] * resolution.height as f64 / (grid.height() - 1) as f64,
             );
         }
         ctx.stroke()?;

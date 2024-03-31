@@ -2,6 +2,16 @@
 name = "maps"
 version = "0.1.0"
 edition = "2021"
+default-run = "maps"
+
+[lib]
+name = "maps"
+
+[[bin]]
+name = "maps"
+
+[[bin]]
+name = "tweak"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
